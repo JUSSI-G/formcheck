@@ -1,16 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-landmarks = np.load("output/subject_001_squat_good_side.npy")
+good = np.load("output/subject_004_squat_good_side.npy")
+bad = np.load("output/subject_004_squat_bad_side.npy")
 
-plt.plot(landmarks[:, 23, 1], label="left hip")
-plt.plot(landmarks[:, 24, 1], label="right hip")
+plt.plot(good[:, 23, 1], label="good")
+plt.plot(bad[:, 24, 1], label="bad")
 
-plt.gca().invert_yaxis()   # so down in the plot = down in real life
+plt.gca().invert_yaxis() 
 plt.xlabel("frame")
 plt.ylabel("hip height (y)")
 plt.legend()
 plt.show()
-
-missing = np.isnan(landmarks[:, 23, 1]).mean()
-print(f"{missing:.0%} of frames have no detection")
