@@ -1,5 +1,7 @@
 import mediapipe as mp
 import cv2
+import numpy as np
+import os
 
 
 models = {
@@ -7,7 +9,7 @@ models = {
     "heavy":  "models/pose_landmarker_heavy.task",
 }
 
-source = "data/Dataset Exercise-wise/bicep_curl/bad/diagonal/subject_001_bicep_curl_bad_diagonal.mp4"
+source = "data/Dataset Exercise-wise/squat/good/side/subject_001_squat_good_side.mp4"
 vid = cv2.VideoCapture(source)
 if not vid.isOpened():
     raise FileNotFoundError(f"Could not open the file")
@@ -45,6 +47,23 @@ while True:
 vid.release()
 
 
-print(len(result), "frames processed")
-print(result[50])
+frames = []
 
+for pose_landmarks in result:
+    if len(pose_landmarks) == 0:
+        frames.append(np.full((33, 4), np.nan))
+    else:
+        person = pose_landmarks[0]
+        rows = []
+        for i in person:
+            rows.append([i.x, i.y, i.z, i.visibility])
+        frames.append(rows)
+
+landmarks = np.array(frames)
+print(landmarks.shape)
+
+os.makedirs("output", exist_ok=True)
+np.save("output/subject_001_squat_good_side.npy", landmarks)
+
+loaded = np.load("output/subject_001_squat_good_side.npy")
+print("loaded:", loaded.shape)
