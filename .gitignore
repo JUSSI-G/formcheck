@@ -1,0 +1,24 @@
+# Python virtual environment
+.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Dataset videos (too big for git; download again from Mendeley)
+data/
+
+# MediaPipe model files (download again from Google)
+models/*.task
+
+# Generated landmark files and other outputs
+output/
+*.npy
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Editor and OS clutter
+.vscode/
+Thumbs.db
+.DS_Store
