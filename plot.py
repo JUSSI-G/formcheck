@@ -5,17 +5,24 @@ from scipy.signal import find_peaks
 good = np.load("output/subject_004_squat_good_side.npy")
 bad = np.load("output/subject_004_squat_bad_side.npy")
 
-plt.plot(good[:, 23, 1], label="good")
-plt.plot(bad[:, 23, 1], label="bad")
+def gap_fill(y):
+    frames = np.arange(len(y))
+    ok = ~np.isnan(y)
+    return np.interp(frames, frames[ok], y[ok])
 
-y = good[:, 23, 1]
-peaks, props = find_peaks(y, prominence=0.05)
+y = gap_fill(good[:, 23, 1])
+peaks, props = find_peaks(y, prominence=0.05, distance=20)
 print(len(peaks), peaks)
 
-y_b = bad[:, 23, 1]
-b_peaks, b_props = find_peaks(y_b, prominence=0.05)
+y_b = gap_fill(bad[:, 23, 1])
+b_peaks, b_props = find_peaks(y_b, prominence=0.05, distance=20)
 print(len(b_peaks), b_peaks)
 
+
+plt.plot(y, label="good")
+plt.plot(y_b, label="bad")
+plt.plot(peaks, y[peaks], "o")
+plt.plot(b_peaks, y_b[b_peaks], "o")
 plt.gca().invert_yaxis() 
 plt.xlabel("frame")
 plt.ylabel("hip height (y)")
