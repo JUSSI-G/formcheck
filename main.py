@@ -21,6 +21,8 @@ def extract_landmarks(path):
     if not vid.isOpened():
         raise FileNotFoundError(f"Could not open {path}")
     fps = vid.get(cv2.CAP_PROP_FPS)
+    width = vid.get(cv2.CAP_PROP_FRAME_WIDTH)
+    height = vid.get(cv2.CAP_PROP_FRAME_HEIGHT)
     frame_index = 0
     result = []
 
@@ -50,14 +52,17 @@ def extract_landmarks(path):
                 rows.append([i.x, i.y, i.z, i.visibility])
             frames.append(rows)
 
-    return np.array(frames)
+    return np.array(frames), fps, width, height
 
-
-folder = Path("data/Dataset Exercise-wise/squat/bad/side")
+folders = [
+    Path("data/Dataset Exercise-wise/squat/good/side"),
+    Path("data/Dataset Exercise-wise/squat/bad/side"),
+]
 os.makedirs("output", exist_ok=True)
 
-for path in sorted(folder.glob("*.mp4")):
-    landmarks = extract_landmarks(path)
-    missing = np.isnan(landmarks[:, 23, 1]).mean()
-    print(f"{path.name}: {landmarks.shape[0]} frames, {missing:.0%} missing")
-    np.save(f"output/{path.stem}.npy", landmarks)
+for folder in folders:
+    for path in sorted(folder.glob("*.mp4")):
+        landmarks, fps, width, height = extract_landmarks(path)
+        missing = np.isnan(landmarks[:, 23, 1]).mean()
+        print(f"{path.name}: {landmarks.shape[0]} frames, {missing:.0%} missing")
+        np.savez(f"output/{path.stem}.npz", landmarks=landmarks, fps=fps, width=width, height=height)
