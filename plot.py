@@ -30,55 +30,35 @@ def thigh_angle(landmarks, frame):
     ky = landmarks[frame, 25, 1] * height
     return np.degrees(np.arctan2(hy - ky, abs(kx - hx)))
 
+def rep_stats(landmarks, fps):
+    y = gap_fill(landmarks[:, 23, 1])
+    peaks, _ = find_peaks(y, prominence=0.05, distance=20)
+    tops, _ = find_peaks(-y, prominence=0.05, distance=20)
 
-for i, bottom in enumerate(peaks):
-    before = tops[tops < bottom]
-    after = tops[bottom < tops]
+    reps = []
+    for bottom in peaks:
+        before = tops[tops < bottom]
+        after = tops[tops > bottom]
 
-    if len(before) == 0 or len(after) == 0:
-        continue
-    
-    start = before[-1]
-    end = after[0]
+        if len(before) == 0 or len(after) == 0:
+            continue
 
-    down = (bottom - start) / fps
-    up = (end - bottom) / fps
+        start = before[-1]
+        end = after[0]
 
-    l_hip_y= good[bottom, 23, 1]
-    l_knee_y = good[bottom, 25, 1]  
+        reps.append({
+            "start": start,
+            "bottom": bottom,
+            "end": end,
+            "down": (bottom - start) / fps,
+            "up": (end - bottom) / fps,
+            "thigh": thigh_angle(landmarks, bottom),
+        })
 
-    angle = thigh_angle(good, bottom)
-    print(f"good rep {i + 1}: down {down:.2f} s, up {up:.2f} s, thigh {angle:.1f}°")
+    return reps
 
 
+for name, landmarks in [("good", good), ("bad", bad)]:
+    for i, rep in enumerate(rep_stats(landmarks, fps)):
+        print(f"{name} rep {i + 1}: down {rep['down']:.2f} s, up {rep['up']:.2f} s, thigh {rep['thigh']:.1f}°")
 
-for i, bottom in enumerate(b_peaks):
-    before = b_tops[b_tops < bottom]
-    after = b_tops[bottom < b_tops]
-
-    if len(before) == 0 or len(after) == 0:
-        continue
-
-    start = before[-1]
-    end = after[0]
-
-    down = (bottom - start) / fps
-    up = (end - bottom) / fps
-
-    l_hip_y = bad[bottom, 23, 1]
-    l_knee_y = bad[bottom, 25, 1]
-
-    angle = thigh_angle(bad, bottom)
-    print(f"bad rep {i + 1}: down {down:.2f} s, up {up:.2f} s, thigh {angle:.1f}°")
-
-plt.plot(y, label="good")
-plt.plot(y_b, label="bad")
-plt.plot(tops, y[tops], "x")
-plt.plot(b_tops, y_b[b_tops], "x")
-plt.plot(peaks, y[peaks], "o")
-plt.plot(b_peaks, y_b[b_peaks], "o")
-plt.gca().invert_yaxis() 
-plt.xlabel("frame")
-plt.ylabel("hip height (y)")
-plt.legend()
-plt.show()
