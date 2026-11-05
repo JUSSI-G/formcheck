@@ -102,6 +102,9 @@ def rep_stats(landmarks, fps, width, height):
             "lean": torso_lean(landmarks, bottom, side, width, height),
             "knee_fwd": knee_forward(landmarks, bottom, side, width, height),
             "heel_lift": heel_lift(landmarks, start, bottom, side, width, height),
+            "lockout": joint_angle(landmarks, start, side["hip"], side["knee"], side["ankle"], width, height),
+            "rom": joint_angle(landmarks, start, side["hip"], side["knee"], side["ankle"], width, height)
+                   - joint_angle(landmarks, bottom, side["hip"], side["knee"], side["ankle"], width, height),
         }
 
         if reps and reps[-1]["start"] == start and reps[-1]["end"] == end:

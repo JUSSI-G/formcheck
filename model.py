@@ -20,9 +20,14 @@ def evaluate(data, title):
     }
 
     print(f"\n{title}: {len(data)} reps, {y.mean():.0%} bad, {groups.nunique()} subjects")
+
     for name, model in models.items():
         scores = cross_val_score(model, X, y, cv=cv, groups=groups, scoring="balanced_accuracy")
         print(f"  {name}: {scores.mean():.0%}  {[f'{s:.2f}' for s in scores]}")
+
+    pred = cross_val_predict(models["logistic regression"], X, y, cv=cv, groups=groups)
+    correct = pd.Series(pred == y, index=data.index)
+    print(correct.groupby(data["subject"]).agg(["mean", "count"]).sort_values("mean").head(6))
 
 
 df = pd.read_csv("output/reps_clean.csv")
