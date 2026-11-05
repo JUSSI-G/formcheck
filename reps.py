@@ -1,24 +1,63 @@
 import numpy as np
 from scipy.signal import find_peaks
 
+LEFT = {"name": "left", "shoulder": 11, "hip": 23, "knee": 25, "ankle": 27, "heel": 29, "toe": 31}
+RIGHT = {"name": "right", "shoulder": 12, "hip": 24, "knee": 26, "ankle": 28, "heel": 30, "toe": 32}
+
 
 def gap_fill(y):
     frames = np.arange(len(y))
     ok = ~np.isnan(y)
     return np.interp(frames, frames[ok], y[ok])
 
-def thigh_angle(landmarks, frame, width, height):
-    hx = landmarks[frame, 23, 0] * width
-    hy = landmarks[frame, 23, 1] * height
-    kx = landmarks[frame, 25, 0] * width
-    ky = landmarks[frame, 25, 1] * height
-    return np.degrees(np.arctan2(hy - ky, abs(kx - hx)))
+
+def visible_side(landmarks):
+    left = np.nanmean(landmarks[:, [23, 25, 27], 3])
+    right = np.nanmean(landmarks[:, [24, 26, 28], 3])
+    return LEFT if left >= right else RIGHT
+
+
+def point(landmarks, frame, index, width, height):
+    return landmarks[frame, index, :2] * np.array([width, height])
+
+
+def joint_angle(landmarks, frame, a, b, c, width, height):
+    pa = point(landmarks, frame, a, width, height)
+    pb = point(landmarks, frame, b, width, height)
+    pc = point(landmarks, frame, c, width, height)
+    v1 = pa - pb
+    v2 = pc - pb
+    cos = np.dot(v1, v2) / (np.linalg.norm(v1) * np.linalg.norm(v2))
+    return np.degrees(np.arccos(np.clip(cos, -1, 1)))
+
+
+def thigh_angle(landmarks, frame, side, width, height):
+    h = point(landmarks, frame, side["hip"], width, height)
+    k = point(landmarks, frame, side["knee"], width, height)
+    return np.degrees(np.arctan2(h[1] - k[1], abs(k[0] - h[0])))
+
+
+def torso_lean(landmarks, frame, side, width, height):
+    s = point(landmarks, frame, side["shoulder"], width, height)
+    h = point(landmarks, frame, side["hip"], width, height)
+    return np.degrees(np.arctan2(abs(s[0] - h[0]), h[1] - s[1]))
+
+
+def knee_forward(landmarks, frame, side, width, height):
+    k = point(landmarks, frame, side["knee"], width, height)
+    a = point(landmarks, frame, side["ankle"], width, height)
+    heel = point(landmarks, frame, side["heel"], width, height)
+    toe = point(landmarks, frame, side["toe"], width, height)
+    facing = np.sign(toe[0] - heel[0])
+    return (k[0] - a[0]) * facing / np.linalg.norm(k - a)
 
 
 def rep_stats(landmarks, fps, width, height):
-    y = gap_fill(landmarks[:, 23, 1])
-    peaks, _ = find_peaks(y, prominence=0.05, distance=20)
-    tops, _ = find_peaks(-y, prominence=0.05, distance=20)
+    side = visible_side(landmarks)
+    y = gap_fill(landmarks[:, side["hip"], 1])
+    distance = int(1.3 * fps)
+    peaks, _ = find_peaks(y, prominence=0.05, distance=distance)
+    tops, _ = find_peaks(-y, prominence=0.05, distance=distance)
 
     reps = []
     for bottom in peaks:
@@ -31,13 +70,25 @@ def rep_stats(landmarks, fps, width, height):
         start = before[-1]
         end = after[0]
 
-        reps.append({
+        rep = {
+            "side": side["name"],
             "start": start,
             "bottom": bottom,
             "end": end,
             "down": (bottom - start) / fps,
             "up": (end - bottom) / fps,
-            "thigh": thigh_angle(landmarks, bottom, width, height),
-        })
+            "thigh": thigh_angle(landmarks, bottom, side, width, height),
+            "knee": joint_angle(landmarks, bottom, side["hip"], side["knee"], side["ankle"], width, height),
+            "hip": joint_angle(landmarks, bottom, side["shoulder"], side["hip"], side["knee"], width, height),
+            "lean": torso_lean(landmarks, bottom, side, width, height),
+            "knee_fwd": knee_forward(landmarks, bottom, side, width, height),
+        }
+
+        if reps and reps[-1]["start"] == start and reps[-1]["end"] == end:
+            if y[bottom] > y[reps[-1]["bottom"]]:
+                reps[-1] = rep
+            continue
+
+        reps.append(rep)
 
     return reps
