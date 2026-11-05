@@ -4,16 +4,6 @@ import pandas as pd
 from reps import rep_stats
 
 
-def find_duplicate_subjects(df):
-    good = df[df["quality"] == "good"]
-    bad = df[df["quality"] == "bad"]
-
-    pairs = good.merge(bad, on=["subject", "rep"], suffixes=("_good", "_bad"))
-    pairs["same"] = np.isclose(pairs["thigh_good"], pairs["thigh_bad"])
-
-    share = pairs.groupby("subject")["same"].mean()
-    return share[share > 0.5].index.tolist()
-
 rows = []
 for path in sorted(Path("output").glob("*.npz")):
     data = np.load(path)
@@ -31,8 +21,6 @@ fingerprints = df.groupby(["subject", "quality"])["thigh"].apply(lambda s: tuple
 df.to_csv("output/reps.csv", index=False)
 
 mask = fingerprints.duplicated(keep=False)
-dup_videos = fingerprints[mask].index.tolist()
-print("duplicated videos:", dup_videos)
 
 dups = fingerprints[mask]
 drop = []
@@ -47,11 +35,11 @@ for fp, group in dups.groupby(dups):
 
 print("dropping:", drop)
 
-MAX_MISSING = 0.10
-duplicates = find_duplicate_subjects(df)
-print("duplicate subjects:", duplicates)
+video_ids = pd.MultiIndex.from_frame(df[["subject", "quality"]])
 
-clean = df[(df["missing"] <= MAX_MISSING) & (~df["subject"].isin(duplicates))]
+MAX_MISSING = 0.10
+
+clean = df[(df["missing"] <= MAX_MISSING) & (~video_ids.isin(drop))]
 print(len(df), "reps total,", len(clean), "after filtering")
 print(clean.groupby("quality")["thigh"].describe())
 
