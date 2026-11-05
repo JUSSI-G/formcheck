@@ -5,33 +5,35 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 
+features = ["thigh", "knee", "hip", "lean", "knee_fwd", "down", "up", "heel_lift"]
 
-df = pd.read_csv('output/reps_clean.csv')
-features = ["thigh", "knee", "hip", "lean", "knee_fwd", "down", "up"]
 
+def evaluate(data, title):
+    X = data[features]
+    y = data["quality"] == "bad"
+    groups = data["subject"]
+    cv = GroupKFold(n_splits=5)
+
+    models = {
+        "logistic regression": make_pipeline(StandardScaler(), LogisticRegression()),
+        "random forest": RandomForestClassifier(n_estimators=300, max_depth=3, min_samples_leaf=20, random_state=0),
+    }
+
+    print(f"\n{title}: {len(data)} reps, {y.mean():.0%} bad, {groups.nunique()} subjects")
+    for name, model in models.items():
+        scores = cross_val_score(model, X, y, cv=cv, groups=groups, scoring="balanced_accuracy")
+        print(f"  {name}: {scores.mean():.0%}  {[f'{s:.2f}' for s in scores]}")
+
+
+df = pd.read_csv("output/reps_clean.csv")
 df = df.dropna(subset=features)
 
-X = df[features]
-y = df["quality"] == "bad"
-groups = df["subject"]
+errors = pd.read_csv("labels/errors.csv")
+df = df.merge(errors, on="subject", how="left")
 
-cv = GroupKFold(n_splits=5)
-lr = make_pipeline(StandardScaler(), LogisticRegression())
-rf = RandomForestClassifier(n_estimators=300, max_depth=3, min_samples_leaf=20, random_state=0)
+is_good = df["quality"] == "good"
+is_depth_bad = (df["quality"] == "bad") & (df["error"] == "depth")
+depth_df = df[is_good | is_depth_bad]
 
-models = {
-    "logistic regression": lr,
-    "random forest": rf,
-}
-
-for name, model in models.items():
-    scores = cross_val_score(model, X, y, cv=cv, groups=groups)
-    print(name, scores.mean(), scores)
-
-df["pred"] = cross_val_predict(lr, X, y, cv=cv, groups=groups)
-df["correct"] = df["pred"] == y
-
-per_subject = df.groupby("subject")["correct"].agg(["mean", "count"]).sort_values("mean")
-print(per_subject)
-
-print(df[df["subject"] == 18].groupby("quality")[features].median().round(2))
+evaluate(df, "all errors")
+evaluate(depth_df, "depth only")

@@ -52,6 +52,25 @@ def knee_forward(landmarks, frame, side, width, height):
     return (k[0] - a[0]) * facing / np.linalg.norm(k - a)
 
 
+def foot_angle(landmarks, frame, side, width, height, window=2):
+    first = max(0, frame - window)
+    last = min(len(landmarks) - 1, frame + window)
+
+    angles = []
+    for f in range(first, last + 1):
+        heel = point(landmarks, f, side["heel"], width, height)
+        toe = point(landmarks, f, side["toe"], width, height)
+        angles.append(np.degrees(np.arctan2(heel[1] - toe[1], abs(toe[0] - heel[0]))))
+
+    return np.nanmedian(angles)
+
+
+def heel_lift(landmarks, start, bottom, side, width, height):
+    standing = foot_angle(landmarks, start, side, width, height)
+    squatting = foot_angle(landmarks, bottom, side, width, height)
+    return standing - squatting
+
+
 def rep_stats(landmarks, fps, width, height):
     side = visible_side(landmarks)
     y = gap_fill(landmarks[:, side["hip"], 1])
@@ -82,6 +101,7 @@ def rep_stats(landmarks, fps, width, height):
             "hip": joint_angle(landmarks, bottom, side["shoulder"], side["hip"], side["knee"], width, height),
             "lean": torso_lean(landmarks, bottom, side, width, height),
             "knee_fwd": knee_forward(landmarks, bottom, side, width, height),
+            "heel_lift": heel_lift(landmarks, start, bottom, side, width, height),
         }
 
         if reps and reps[-1]["start"] == start and reps[-1]["end"] == end:
