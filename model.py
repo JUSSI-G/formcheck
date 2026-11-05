@@ -42,3 +42,8 @@ depth_df = df[is_good | is_depth_bad]
 
 evaluate(df, "all errors")
 evaluate(depth_df, "depth only")
+
+is_back_bad = (df["quality"] == "bad") & (df["error"] == "back")
+back_df = df[is_good | is_back_bad]
+
+evaluate(back_df, "back only")

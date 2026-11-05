@@ -1,8 +1,8 @@
 import numpy as np
 from scipy.signal import find_peaks
 
-LEFT = {"name": "left", "shoulder": 11, "hip": 23, "knee": 25, "ankle": 27, "heel": 29, "toe": 31}
-RIGHT = {"name": "right", "shoulder": 12, "hip": 24, "knee": 26, "ankle": 28, "heel": 30, "toe": 32}
+LEFT = {"name": "left", "ear": 7, "shoulder": 11, "hip": 23, "knee": 25, "ankle": 27, "heel": 29, "toe": 31}
+RIGHT = {"name": "right", "ear": 8, "shoulder": 12, "hip": 24, "knee": 26, "ankle": 28, "heel": 30, "toe": 32}
 
 
 def gap_fill(y):
@@ -70,6 +70,15 @@ def heel_lift(landmarks, start, bottom, side, width, height):
     squatting = foot_angle(landmarks, bottom, side, width, height)
     return standing - squatting
 
+def head_forward(landmarks, frame, side, width, height):
+    ear = point(landmarks, frame, side["ear"], width, height)
+    s = point(landmarks, frame, side["shoulder"], width, height)
+    h = point(landmarks, frame, side["hip"], width, height)
+    heel = point(landmarks, frame, side["heel"], width, height)
+    toe = point(landmarks, frame, side["toe"], width, height)
+    facing = np.sign(toe[0] - heel[0])
+    return (ear[0] - s[0]) * facing / np.linalg.norm(s - h)
+
 
 def rep_stats(landmarks, fps, width, height):
     side = visible_side(landmarks)
@@ -105,6 +114,9 @@ def rep_stats(landmarks, fps, width, height):
             "lockout": joint_angle(landmarks, start, side["hip"], side["knee"], side["ankle"], width, height),
             "rom": joint_angle(landmarks, start, side["hip"], side["knee"], side["ankle"], width, height)
                    - joint_angle(landmarks, bottom, side["hip"], side["knee"], side["ankle"], width, height),
+            "lean_change": torso_lean(landmarks, bottom, side, width, height)
+                    - torso_lean(landmarks, start, side, width, height),
+            "head_forward": head_forward(landmarks, bottom, side, width, height),
         }
 
         if reps and reps[-1]["start"] == start and reps[-1]["end"] == end:
