@@ -1,6 +1,7 @@
 import "./style.css";
 import { createLandmarker, extractLandmarks } from "./pose";
 import { repStats } from "./reps";
+import { loadDepthModel, shallowProbability } from "./model";
 
 const fileInput = document.querySelector<HTMLInputElement>("#file")!;
 const video = document.querySelector<HTMLVideoElement>("#video")!;
@@ -29,4 +30,9 @@ button.addEventListener("click", async () => {
   console.log(data);
   const reps = repStats(data.landmarks, data.fps, data.width, data.height);
   console.table(reps);
+
+  const model = await loadDepthModel();
+  reps.forEach((rep, i) => {
+    console.log(`rep ${i + 1}: ${Math.round(shallowProbability(model, rep) * 100)}% shallow`);
+  });
 });
