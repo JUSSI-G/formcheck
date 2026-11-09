@@ -68,14 +68,15 @@ fileInput.addEventListener("change", () => {
 
 button.addEventListener("click", async () => {
   if (!video.src || isNaN(video.duration)) return;
-
+  video.cancelVideoFrameCallback(loopId);
   button.disabled = true;
   progressText.textContent = "Loading model…";
   const landmarker = await createLandmarker("full");
 
-  const data = await extractLandmarks(landmarker, video, 30, (f) => {
-    progressText.textContent = `Analyzing… ${Math.round(f * 100)}%`;
-  });
+     const data = await extractLandmarks(landmarker, video, (f) => {
+     progressText.textContent = `Analyzing… ${Math.round(f * 100)}%`;
+   });
+
   landmarker.close();
   button.disabled = false;
   progressText.textContent = `Done: ${data.landmarks.length} frames`;
