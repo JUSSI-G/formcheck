@@ -28,6 +28,7 @@ export interface Rep {
   rom: number;
   lean_change: number;
   head_forward: number;
+  cut_off: boolean;
 }
 
 const LEFT: Side = { name: "left", ear: 7, shoulder: 11, hip: 23, knee: 25, ankle: 27, heel: 29, toe: 31 };
@@ -98,6 +99,12 @@ export function findPeaks(x: number[], prominence: number, distance: number): nu
     for (let k = p; k < n && x[k] <= x[p]; k++) rightMin = Math.min(rightMin, x[k]);
     return x[p] - Math.max(leftMin, rightMin) >= prominence;
   });
+}
+
+function findTops(y: number[], prominence: number, distance: number): number[] {
+  const negated = y.map((v) => -v);
+  const pad = Math.min(...negated) - 1;
+  return findPeaks([pad, ...negated, pad], prominence, distance).map((p) => p - 1);
 }
 
 function visibleSide(landmarks: Landmarks): Side {
@@ -173,7 +180,13 @@ export function repStats(landmarks: Landmarks, fps: number, width: number, heigh
   const y = gapFill(landmarks.map((f) => f[side.hip][1]));
   const distance = Math.floor(1.3 * fps);
   const peaks = findPeaks(y, 0.05, distance);
-  const tops = findPeaks(y.map((v) => -v), 0.05, distance);
+  const tops = findTops(y, 0.05, distance);
+
+  const lastFrame = y.length - 1;
+  const inner = tops.filter((t) => t > 0 && t < lastFrame);
+  const standing = inner.length ? nanMedian(inner.map((t) => y[t])) : Math.min(...y);
+  const travel = Math.max(...y) - standing;
+  const notStanding = (t: number) => (t === 0 || t === lastFrame) && y[t] > standing + 0.25 * travel;
 
   const reps: Rep[] = [];
   for (const bottom of peaks) {
@@ -203,6 +216,7 @@ export function repStats(landmarks: Landmarks, fps: number, width: number, heigh
       rom: kneeTop - kneeBottom,
       lean_change: torsoLean(landmarks, bottom, side, width, height) - torsoLean(landmarks, start, side, width, height),
       head_forward: headForward(landmarks, bottom, side, width, height),
+      cut_off: notStanding(start) || notStanding(end),
     };
 
     const last = reps[reps.length - 1];

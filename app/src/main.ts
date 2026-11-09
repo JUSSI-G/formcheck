@@ -34,8 +34,7 @@ function showResults(reps: Rep[], model: DepthModel, fps: number) {
     item.className = shallow ? "rep shallow" : "rep ok";
 
     const title = document.createElement("strong");
-    title.textContent = `Rep ${i + 1}: ${shallow ? "Looks shallow" : "Depth looks good"}`;
-
+        title.textContent = `Rep ${i + 1}: ${shallow ? "Looks shallow" : "Depth looks good"}${rep.cut_off ? " (possibly cut off)" : ""}`;
     const details = document.createElement("span");
     details.textContent = `${depthText(rep.thigh, deepest)} · down ${rep.down.toFixed(1)} s · up ${rep.up.toFixed(1)} s`;
 
