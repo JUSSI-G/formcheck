@@ -1,16 +1,105 @@
+:root {
+  --text: #1c1f24;
+  --muted: #8a9099;
+  --stripe: #f7f8fa;
+  --bad: #e5484d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.4;
+}
+
 main {
   max-width: 720px;
   margin: 0 auto;
-  padding: 16px;
+  padding: 24px 16px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-video {
-  display: block;
+h1 {
+  margin: 0;
+  font-size: 1.6rem;
+}
+
+#input {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+#input h1,
+#input p {
   width: 100%;
+  margin: 0;
+}
+
+#input p {
+  color: var(--muted);
+}
+
+input[type="file"] {
+  font: inherit;
+  color: var(--muted);
+}
+
+button,
+input[type="file"]::file-selector-button {
+  padding: 9px 18px;
+  border: none;
+  border-radius: 12px;
+  background: #555555;
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+
+input[type="file"]::file-selector-button {
+  margin-right: 10px;
+}
+
+button:hover,
+input[type="file"]::file-selector-button:hover {
+  background: #333333;
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#progress-text {
+  margin: 0;
+  color: var(--muted);
+}
+
+#analyzing:has(#progress-text:empty) {
+  display: none;
 }
 
 .player {
   position: relative;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #000;
+}
+
+.player video {
+  display: block;
+  width: 100%;
 }
 
 .player canvas {
@@ -21,6 +110,55 @@ video {
   pointer-events: none;
 }
 
-.rep span {
-  display: block;
+#results {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#results[hidden] {
+  display: none;
+}
+
+#summary {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+#rep-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.rep {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.rep:nth-child(odd) {
+  background: var(--stripe);
+}
+
+.rep:hover {
+  background: #eef0f3;
+}
+
+.rep.shallow strong {
+  color: var(--bad);
+}
+
+#export {
+  align-self: flex-end;
 }
