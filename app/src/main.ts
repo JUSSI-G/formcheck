@@ -46,12 +46,16 @@ button.addEventListener("click", async () => {
   video.cancelVideoFrameCallback(loopId);
 
   function drawLoop() {
-    const i = Math.round(video.currentTime * data.fps);
-    const rep = reps.find((r) => i >= r.start && i <= r.end);
-    const shallow = rep ? shallowProbability(model, rep) > 0.5 : false;
-    drawSkeleton(canvas, data.landmarks[i], data.width, data.height, shallow);
-    loopId = video.requestVideoFrameCallback(drawLoop);
-  }
+  const i = Math.round(video.currentTime * data.fps);
+  const rep = reps.find((r) => i >= r.start && i <= r.end);
+  const shallow =
+    rep !== undefined &&
+    Math.abs(i - rep.bottom) < data.fps * 0.5 &&
+    shallowProbability(model, rep) > 0.5;
+  drawSkeleton(canvas, data.landmarks[i], data.width, data.height, shallow);
+  loopId = video.requestVideoFrameCallback(drawLoop);
+}
+
   loopId = video.requestVideoFrameCallback(drawLoop);
   video.currentTime = 0;
   console.log("drawing frame", Math.round(video.currentTime * data.fps));
