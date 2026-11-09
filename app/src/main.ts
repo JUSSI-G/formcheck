@@ -1,5 +1,6 @@
 import "./style.css";
 import { createLandmarker, extractLandmarks } from "./pose";
+import { repStats } from "./reps";
 
 const fileInput = document.querySelector<HTMLInputElement>("#file")!;
 const video = document.querySelector<HTMLVideoElement>("#video")!;
@@ -26,4 +27,6 @@ button.addEventListener("click", async () => {
 
   progressText.textContent = `Done: ${data.landmarks.length} frames`;
   console.log(data);
+  const reps = repStats(data.landmarks, data.fps, data.width, data.height);
+  console.table(reps);
 });
