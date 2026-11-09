@@ -4,34 +4,33 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>app</title>
+    <title>FormCheck</title>
   </head>
   <body>
     <main id="app">
-  <section id="input">
-  <h1>FormCheck</h1>
-  <p>Choose a side-view video of a squat set.</p>
-  <input type="file" id="file" accept="video/*" />
-  <button type="button" id="analyze">Analyze</button>
-  </section>
+      <section id="input">
+        <h1>FormCheck</h1>
+        <p>Choose a side-view video of a squat set.</p>
+        <input type="file" id="file" accept="video/*" />
+        <button type="button" id="analyze">Analyze</button>
+      </section>
 
-  <section id="analyzing">
-  <p id="progress-text"></p>
-  </section>
+      <section id="analyzing">
+        <p id="progress-text"></p>
+      </section>
 
-  <div class="player">
-  <video id="video" controls playsinline muted></video>
-  <canvas id="overlay"></canvas>
-  </div>
+      <div class="player">
+        <video id="video" controls playsinline muted></video>
+        <canvas id="overlay"></canvas>
+      </div>
 
-  <section id="results" hidden>
-  <p id="summary"></p>
-  <p class="note">Depth is judged by a model trained on bodyweight squats. It compares reps, it doesn't measure against a competition standard.</p>
-  <ol id="rep-list"></ol>
-  </section>
-  
-  </section>
-</main>
- <script type="module" src="/src/main.ts"></script>
+      <section id="results" hidden>
+        <p id="summary"></p>
+        <p class="note">Depth is judged by a model trained on bodyweight squats. It compares reps, it doesn't measure against a competition standard.</p>
+        <ol id="rep-list"></ol>
+        <button type="button" id="export">Download video</button>
+      </section>
+    </main>
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

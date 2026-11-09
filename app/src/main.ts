@@ -1,8 +1,9 @@
 import "./style.css";
-import { createLandmarker, extractLandmarks } from "./pose";
+import { createLandmarker, extractLandmarks, type PoseData } from "./pose";
 import { repStats, type Rep } from "./reps";
 import { loadDepthModel, shallowProbability, type DepthModel } from "./model";
 import { drawSkeleton } from "./draw";
+import { exportVideo, type RepLabel } from "./export";
 
 const fileInput = document.querySelector<HTMLInputElement>("#file")!;
 const video = document.querySelector<HTMLVideoElement>("#video")!;
@@ -12,12 +13,26 @@ const progressText = document.querySelector<HTMLElement>("#progress-text")!;
 const results = document.querySelector<HTMLElement>("#results")!;
 const summary = document.querySelector<HTMLElement>("#summary")!;
 const repList = document.querySelector<HTMLOListElement>("#rep-list")!;
+const exportButton = document.querySelector<HTMLButtonElement>("#export")!;
 
 let loopId = 0;
+let lastAnalysis: { data: PoseData; reps: Rep[]; labels: RepLabel[] } | null = null;
 
 function depthText(thigh: number, deepest: number): string {
   const diff = Math.round(deepest - thigh);
   return diff <= 1 ? "your deepest rep" : `${diff}° shallower than your deepest rep`;
+}
+
+function makeLabels(reps: Rep[], model: DepthModel): RepLabel[] {
+  const deepest = Math.max(...reps.map((r) => r.thigh));
+  return reps.map((rep, i) => {
+    const shallow = shallowProbability(model, rep) > 0.5;
+    return {
+      title: `Rep ${i + 1}: ${shallow ? "Looks shallow" : "Depth looks good"}${rep.cut_off ? " (possibly cut off)" : ""}`,
+      detail: depthText(rep.thigh, deepest),
+      shallow,
+    };
+  });
 }
 
 function showResults(reps: Rep[], model: DepthModel, fps: number) {
@@ -34,7 +49,7 @@ function showResults(reps: Rep[], model: DepthModel, fps: number) {
     item.className = shallow ? "rep shallow" : "rep ok";
 
     const title = document.createElement("strong");
-        title.textContent = `Rep ${i + 1}: ${shallow ? "Looks shallow" : "Depth looks good"}${rep.cut_off ? " (possibly cut off)" : ""}`;
+    title.textContent = `Rep ${i + 1}: ${shallow ? "Looks shallow" : "Depth looks good"}${rep.cut_off ? " (possibly cut off)" : ""}`;
     const details = document.createElement("span");
     details.textContent = `${depthText(rep.thigh, deepest)} · down ${rep.down.toFixed(1)} s · up ${rep.up.toFixed(1)} s`;
 
@@ -61,6 +76,7 @@ fileInput.addEventListener("change", () => {
   progressText.textContent = "";
   results.hidden = true;
   repList.replaceChildren();
+  lastAnalysis = null;
 
   video.src = URL.createObjectURL(file);
 });
@@ -72,9 +88,9 @@ button.addEventListener("click", async () => {
   progressText.textContent = "Loading model…";
   const landmarker = await createLandmarker("full");
 
-     const data = await extractLandmarks(landmarker, video, (f) => {
-     progressText.textContent = `Analyzing… ${Math.round(f * 100)}%`;
-   });
+  const data = await extractLandmarks(landmarker, video, (f) => {
+    progressText.textContent = `Analyzing… ${Math.round(f * 100)}%`;
+  });
 
   landmarker.close();
   button.disabled = false;
@@ -83,6 +99,7 @@ button.addEventListener("click", async () => {
   const reps = repStats(data.landmarks, data.fps, data.width, data.height);
   const model = await loadDepthModel();
   showResults(reps, model, data.fps);
+  lastAnalysis = { data, reps, labels: makeLabels(reps, model) };
 
   video.cancelVideoFrameCallback(loopId);
 
@@ -99,4 +116,27 @@ button.addEventListener("click", async () => {
 
   loopId = video.requestVideoFrameCallback(drawLoop);
   video.currentTime = 0;
+});
+
+exportButton.addEventListener("click", async () => {
+  if (!lastAnalysis) return;
+  exportButton.disabled = true;
+
+  const { blob, extension } = await exportVideo(
+    video,
+    lastAnalysis.data,
+    lastAnalysis.reps,
+    lastAnalysis.labels,
+    (f) => {
+      progressText.textContent = `Creating video… ${Math.round(f * 100)}%`;
+    },
+  );
+
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = `formcheck.${extension}`;
+  link.click();
+
+  progressText.textContent = "Video ready";
+  exportButton.disabled = false;
 });
