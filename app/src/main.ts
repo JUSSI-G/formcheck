@@ -2,11 +2,15 @@ import "./style.css";
 import { createLandmarker, extractLandmarks } from "./pose";
 import { repStats } from "./reps";
 import { loadDepthModel, shallowProbability } from "./model";
+import { drawSkeleton } from "./draw";
 
 const fileInput = document.querySelector<HTMLInputElement>("#file")!;
 const video = document.querySelector<HTMLVideoElement>("#video")!;
+const canvas = document.querySelector<HTMLCanvasElement>("#overlay")!;
 const button = document.querySelector<HTMLButtonElement>("#analyze")!;
 const progressText = document.querySelector<HTMLElement>("#progress-text")!;
+
+let loopId = 0;
 
 fileInput.addEventListener("change", () => {
   const file = fileInput.files?.[0];
@@ -25,14 +29,24 @@ button.addEventListener("click", async () => {
   });
   landmarker.close();
   button.disabled = false;
-
   progressText.textContent = `Done: ${data.landmarks.length} frames`;
-  console.log(data);
-  const reps = repStats(data.landmarks, data.fps, data.width, data.height);
-  console.table(reps);
 
+  const reps = repStats(data.landmarks, data.fps, data.width, data.height);
   const model = await loadDepthModel();
   reps.forEach((rep, i) => {
     console.log(`rep ${i + 1}: ${Math.round(shallowProbability(model, rep) * 100)}% shallow`);
   });
+
+  video.cancelVideoFrameCallback(loopId);
+
+  function drawLoop() {
+    const i = Math.round(video.currentTime * data.fps);
+    const rep = reps.find((r) => i >= r.start && i <= r.end);
+    const shallow = rep ? shallowProbability(model, rep) > 0.5 : false;
+    drawSkeleton(canvas, data.landmarks[i], data.width, data.height, shallow);
+    loopId = video.requestVideoFrameCallback(drawLoop);
+  }
+  loopId = video.requestVideoFrameCallback(drawLoop);
+  video.currentTime = 0;
+  console.log("drawing frame", Math.round(video.currentTime * data.fps));
 });
