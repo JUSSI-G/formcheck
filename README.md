@@ -1,7 +1,6 @@
 # FormCheck
 
-FormCheck looks at a video of your (or anyones) squats and tells you, rep by rep, whether you went deep enough. It replays the video with a skeleton drawn over you, and you can download that video to send to a coach.
-
+FormCheck looks at a video of your (or anyones) squats and tells you, rep by rep, whether you went deep enough. It replays the video with a skeleton drawn over you, and you can download that video. 
 Everything runs in the browser. The video never leaves your device.
 
 <p align="center">
@@ -90,8 +89,7 @@ Plain TypeScript and Vite, no framework. Code is in [app/src](app/src).
 ![Barbell squat: the skeleton lands on the weight plate, or isn't found at all](docs/barbell-failure.jpg)
 
 - **Side view only.** If the camera faces the lifter more, the thighs look flatter than they are and depth is misjudged.
-- **20 people.** Results vary a lot depending on who's in the test group.
-- **Labels are per video.** A "bad" video can contain good reps.
+- **The data is the biggest bottleneck.** After dropping blurry, shaky and duplicate videos, only 20 people were left, and results vary a lot depending on who's in the test group. The labels are also per video, so a "bad" video can contain good reps. More people, steadier side-on footage and per-rep labels would likely help more than a fancier model.
 
 ## Running it
 
@@ -127,7 +125,11 @@ python scripts/make_figures.py  # regenerate the figures in docs/
 
 - Barbell squats, filmed from a diagonal angle so the plates don't hide the hips.
 - A check that warns when the camera isn't side-on.
-- More labeled data, including my own sets.
+- A bigger, cleaner dataset with per-rep labels, including my own sets. [Fitness-AQA](https://github.com/ParitoshParmar/Fitness-AQA) has back squats labeled by trainers and looks like a good next step.
+
+## License
+
+The code is under the [MIT License](LICENSE). The dataset keeps its own license (CC BY 4.0), and the videos in `docs/` aren't covered by the code license.
 
 ## Credits
 
