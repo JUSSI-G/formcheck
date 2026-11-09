@@ -15,14 +15,15 @@ const repList = document.querySelector<HTMLOListElement>("#rep-list")!;
 
 let loopId = 0;
 
-function depthText(thigh: number): string {
-  const degrees = Math.round(Math.abs(thigh));
-  return thigh < 0 ? `thigh ${degrees}° above parallel` : `thigh ${degrees}° below parallel`;
+function depthText(thigh: number, deepest: number): string {
+  const diff = Math.round(deepest - thigh);
+  return diff <= 1 ? "your deepest rep" : `${diff}° shallower than your deepest rep`;
 }
 
 function showResults(reps: Rep[], model: DepthModel, fps: number) {
   repList.replaceChildren();
 
+  const deepest = Math.max(...reps.map((r) => r.thigh));
   let deepEnough = 0;
 
   reps.forEach((rep, i) => {
@@ -33,10 +34,10 @@ function showResults(reps: Rep[], model: DepthModel, fps: number) {
     item.className = shallow ? "rep shallow" : "rep ok";
 
     const title = document.createElement("strong");
-    title.textContent = `Rep ${i + 1}: ${shallow ? "Too shallow" : "Depth OK"}`;
+    title.textContent = `Rep ${i + 1}: ${shallow ? "Looks shallow" : "Depth looks good"}`;
 
     const details = document.createElement("span");
-    details.textContent = `${depthText(rep.thigh)} · down ${rep.down.toFixed(1)} s · up ${rep.up.toFixed(1)} s`;
+    details.textContent = `${depthText(rep.thigh, deepest)} · down ${rep.down.toFixed(1)} s · up ${rep.up.toFixed(1)} s`;
 
     item.append(title, details);
     item.addEventListener("click", () => {
@@ -47,7 +48,7 @@ function showResults(reps: Rep[], model: DepthModel, fps: number) {
   });
 
   summary.textContent = reps.length
-    ? `${deepEnough} of ${reps.length} reps reached depth`
+    ? `Depth looks good on ${deepEnough} of ${reps.length} reps`
     : "No complete reps found. Is the whole body visible from the side?";
   results.hidden = false;
 }
