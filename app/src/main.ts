@@ -14,7 +14,13 @@ let loopId = 0;
 
 fileInput.addEventListener("change", () => {
   const file = fileInput.files?.[0];
-  if (file) video.src = URL.createObjectURL(file);
+  if (!file) return;
+
+  video.cancelVideoFrameCallback(loopId);
+  canvas.getContext("2d")!.clearRect(0, 0, canvas.width, canvas.height);
+  progressText.textContent = "";
+
+  video.src = URL.createObjectURL(file);
 });
 
 button.addEventListener("click", async () => {
