@@ -1,7 +1,7 @@
 import "./style.css";
 import { createLandmarker, extractLandmarks } from "./pose";
-import { repStats } from "./reps";
-import { loadDepthModel, shallowProbability } from "./model";
+import { repStats, type Rep } from "./reps";
+import { loadDepthModel, shallowProbability, type DepthModel } from "./model";
 import { drawSkeleton } from "./draw";
 
 const fileInput = document.querySelector<HTMLInputElement>("#file")!;
@@ -9,8 +9,48 @@ const video = document.querySelector<HTMLVideoElement>("#video")!;
 const canvas = document.querySelector<HTMLCanvasElement>("#overlay")!;
 const button = document.querySelector<HTMLButtonElement>("#analyze")!;
 const progressText = document.querySelector<HTMLElement>("#progress-text")!;
+const results = document.querySelector<HTMLElement>("#results")!;
+const summary = document.querySelector<HTMLElement>("#summary")!;
+const repList = document.querySelector<HTMLOListElement>("#rep-list")!;
 
 let loopId = 0;
+
+function depthText(thigh: number): string {
+  const degrees = Math.round(Math.abs(thigh));
+  return thigh < 0 ? `thigh ${degrees}° above parallel` : `thigh ${degrees}° below parallel`;
+}
+
+function showResults(reps: Rep[], model: DepthModel, fps: number) {
+  repList.replaceChildren();
+
+  let deepEnough = 0;
+
+  reps.forEach((rep, i) => {
+    const shallow = shallowProbability(model, rep) > 0.5;
+    if (!shallow) deepEnough++;
+
+    const item = document.createElement("li");
+    item.className = shallow ? "rep shallow" : "rep ok";
+
+    const title = document.createElement("strong");
+    title.textContent = `Rep ${i + 1}: ${shallow ? "Too shallow" : "Depth OK"}`;
+
+    const details = document.createElement("span");
+    details.textContent = `${depthText(rep.thigh)} · down ${rep.down.toFixed(1)} s · up ${rep.up.toFixed(1)} s`;
+
+    item.append(title, details);
+    item.addEventListener("click", () => {
+      video.currentTime = rep.bottom / fps;
+    });
+
+    repList.append(item);
+  });
+
+  summary.textContent = reps.length
+    ? `${deepEnough} of ${reps.length} reps reached depth`
+    : "No complete reps found. Is the whole body visible from the side?";
+  results.hidden = false;
+}
 
 fileInput.addEventListener("change", () => {
   const file = fileInput.files?.[0];
@@ -19,6 +59,8 @@ fileInput.addEventListener("change", () => {
   video.cancelVideoFrameCallback(loopId);
   canvas.getContext("2d")!.clearRect(0, 0, canvas.width, canvas.height);
   progressText.textContent = "";
+  results.hidden = true;
+  repList.replaceChildren();
 
   video.src = URL.createObjectURL(file);
 });
@@ -39,24 +81,21 @@ button.addEventListener("click", async () => {
 
   const reps = repStats(data.landmarks, data.fps, data.width, data.height);
   const model = await loadDepthModel();
-  reps.forEach((rep, i) => {
-    console.log(`rep ${i + 1}: ${Math.round(shallowProbability(model, rep) * 100)}% shallow`);
-  });
+  showResults(reps, model, data.fps);
 
   video.cancelVideoFrameCallback(loopId);
 
   function drawLoop() {
-  const i = Math.round(video.currentTime * data.fps);
-  const rep = reps.find((r) => i >= r.start && i <= r.end);
-  const shallow =
-    rep !== undefined &&
-    Math.abs(i - rep.bottom) < data.fps * 0.5 &&
-    shallowProbability(model, rep) > 0.5;
-  drawSkeleton(canvas, data.landmarks[i], data.width, data.height, shallow);
-  loopId = video.requestVideoFrameCallback(drawLoop);
-}
+    const i = Math.round(video.currentTime * data.fps);
+    const rep = reps.find((r) => i >= r.start && i <= r.end);
+    const shallow =
+      rep !== undefined &&
+      Math.abs(i - rep.bottom) < data.fps * 0.5 &&
+      shallowProbability(model, rep) > 0.5;
+    drawSkeleton(canvas, data.landmarks[i], data.width, data.height, shallow);
+    loopId = video.requestVideoFrameCallback(drawLoop);
+  }
 
   loopId = video.requestVideoFrameCallback(drawLoop);
   video.currentTime = 0;
-  console.log("drawing frame", Math.round(video.currentTime * data.fps));
 });
