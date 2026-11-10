@@ -8,28 +8,63 @@
   </head>
   <body>
     <main id="app">
-      <section id="input">
-        <h1>FormCheck</h1>
-        <p>Choose a side-view video of a squat set.</p>
-        <input type="file" id="file" accept="video/*" />
-        <button type="button" id="analyze">Analyze</button>
-        <button type="button" id="sample">Test with my video</button>
+      <section class="window" id="input">
+        <h1 class="title-bar">FormCheck</h1>
+        <div class="window-body">
+          <p>Choose a side-view video of a squat set.</p>
+          <div class="row">
+            <input type="file" id="file" accept="video/*" />
+          </div>
+          <div class="row">
+            <button type="button" id="analyze">Analyze</button>
+            <button type="button" id="sample">Test with my video</button>
+          </div>
+        </div>
       </section>
 
-      <section id="analyzing">
-        <p id="progress-text"></p>
+      <section class="window" id="analyzing">
+        <h2 class="title-bar">Status</h2>
+        <div class="window-body">
+          <div class="progress sunken" id="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <div class="progress-fill"></div>
+          </div>
+          <p id="progress-text" class="status-bar sunken"></p>
+        </div>
       </section>
 
-      <div class="player">
-        <video id="video" controls playsinline muted></video>
-        <canvas id="overlay"></canvas>
-      </div>
+      <section class="window" id="player-window">
+        <h2 class="title-bar">Media Player</h2>
+        <div class="window-body">
+          <div class="player sunken">
+            <video id="video" controls playsinline muted></video>
+            <canvas id="overlay"></canvas>
+          </div>
+        </div>
+      </section>
 
-      <section id="results" hidden>
-        <p id="summary"></p>
-        <p class="note">Depth is judged by a model trained on bodyweight squats. It compares reps, it doesn't measure against a competition standard.</p>
-        <ol id="rep-list"></ol>
-        <button type="button" id="export">Download video</button>
+      <section class="window" id="results" hidden>
+        <h2 class="title-bar">Results</h2>
+        <div class="window-body">
+          <p id="summary"></p>
+          <div class="list-view sunken">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rep</th>
+                  <th>Depth</th>
+                  <th>vs. deepest</th>
+                  <th class="num">Down</th>
+                  <th class="num">Up</th>
+                </tr>
+              </thead>
+              <tbody id="rep-list"></tbody>
+            </table>
+          </div>
+          <p class="note">Depth is judged by a model trained on bodyweight squats. It compares reps, it doesn't measure against a competition standard. Click a rep to jump to its bottom.</p>
+          <div class="row end">
+            <button type="button" id="export">Download video</button>
+          </div>
+        </div>
       </section>
     </main>
     <script type="module" src="/src/main.ts"></script>

@@ -1,99 +1,219 @@
+/* Windows 95 look. Colours and bevels are tokens so every panel matches. */
 :root {
-  --text: #1c1f24;
-  --muted: #8a9099;
-  --stripe: #f7f8fa;
-  --bad: #e5484d;
+  --face: #c0c0c0;
+  --light: #ffffff;
+  --midlight: #dfdfdf;
+  --shadow: #808080;
+  --dark: #0a0a0a;
+  --title: #000080;
+  --title-text: #ffffff;
+  --text: #000000;
+  --muted: #404040;
+  --field: #ffffff;
+  --bad: #c00000;
+  --good: #006000;
+
+  --raised: inset -1px -1px var(--dark), inset 1px 1px var(--light),
+    inset -2px -2px var(--shadow), inset 2px 2px var(--midlight);
+  --sunken: inset -1px -1px var(--light), inset 1px 1px var(--shadow),
+    inset -2px -2px var(--midlight), inset 2px 2px var(--dark);
+  --pressed: inset -1px -1px var(--light), inset 1px 1px var(--dark),
+    inset -2px -2px var(--midlight), inset 2px 2px var(--shadow);
+
+  --font: "MS Sans Serif", "Microsoft Sans Serif", Tahoma, "Segoe UI", sans-serif;
+  --mono: "Fixedsys", "Lucida Console", "Courier New", monospace;
+  color-scheme: light;
 }
 
 * {
   box-sizing: border-box;
 }
 
+html,
+body {
+  height: 100%;
+}
+
 body {
   margin: 0;
-  background: #fff;
+  overflow-y: auto;
+  background: var(--face);
   color: var(--text);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-  line-height: 1.4;
+  font-family: var(--font);
+  font-size: 13px;
+  line-height: 1.35;
+  -webkit-font-smoothing: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 main {
   max-width: 720px;
   margin: 0 auto;
-  padding: 24px 16px 48px;
+  padding: 6px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 6px;
 }
 
-h1 {
+/* ---------- Windows ---------- */
+
+.window {
+  background: var(--face);
+  box-shadow: var(--raised);
+  padding: 3px;
+}
+
+.window[hidden] {
+  display: none;
+}
+
+.title-bar {
   margin: 0;
-  font-size: 1.6rem;
+  padding: 3px 4px;
+  background: var(--title);
+  color: var(--title-text);
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0;
 }
 
-#input {
+.window-body {
+  padding: 8px 6px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.window-body p {
+  margin: 0;
+}
+
+.row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 6px;
 }
 
-#input h1,
-#input p {
-  width: 100%;
-  margin: 0;
+.row.end {
+  justify-content: flex-end;
 }
 
-#input p {
-  color: var(--muted);
+.sunken {
+  box-shadow: var(--sunken);
 }
 
-input[type="file"] {
-  font: inherit;
-  color: var(--muted);
-}
+/* ---------- Buttons and file picker ---------- */
 
 button,
 input[type="file"]::file-selector-button {
-  padding: 9px 18px;
+  min-width: 75px;
+  min-height: 23px;
+  padding: 3px 12px;
   border: none;
-  border-radius: 12px;
-  background: #555555;
-  color: #fff;
+  border-radius: 0;
+  background: var(--face);
+  color: var(--text);
+  box-shadow: var(--raised);
   font: inherit;
   cursor: pointer;
 }
 
-input[type="file"]::file-selector-button {
-  margin-right: 10px;
+button:active:not(:disabled),
+input[type="file"]::file-selector-button:active {
+  box-shadow: var(--pressed);
+  padding: 4px 11px 2px 13px;
 }
 
-button:hover,
-input[type="file"]::file-selector-button:hover {
-  background: #333333;
+button:focus-visible {
+  outline: 1px dotted var(--text);
+  outline-offset: -4px;
 }
 
 button:disabled {
-  opacity: 0.5;
+  color: var(--shadow);
+  text-shadow: 1px 1px 0 var(--light);
   cursor: default;
 }
 
-#progress-text {
-  margin: 0;
-  color: var(--muted);
+input[type="file"] {
+  width: 100%;
+  max-width: 420px;
+  padding: 3px;
+  background: var(--field);
+  box-shadow: var(--sunken);
+  font: inherit;
+  color: var(--text);
 }
+
+input[type="file"]::file-selector-button {
+  margin-right: 8px;
+}
+
+/* ---------- Checkboxes (for any options added later) ---------- */
+
+input[type="checkbox"] {
+  appearance: none;
+  width: 13px;
+  height: 13px;
+  margin: 0 6px 0 0;
+  background: var(--field);
+  box-shadow: var(--sunken);
+  vertical-align: middle;
+  cursor: pointer;
+}
+
+input[type="checkbox"]:active {
+  background: var(--face);
+}
+
+input[type="checkbox"]:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='7' height='7' shape-rendering='crispEdges'%3E%3Cpath d='M6 0v2H5v1H4v1H3v1H2v1H1V5H0V2h1v1h1v1h1V3h1V2h1V0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+/* ---------- Progress ---------- */
 
 #analyzing:has(#progress-text:empty) {
   display: none;
 }
+
+.progress {
+  --progress: 0%;
+  height: 20px;
+  padding: 3px;
+  background: var(--face);
+}
+
+.progress-fill {
+  width: var(--progress);
+  height: 100%;
+  /* Hard colour stops: flat navy blocks with gaps, no smooth fill. */
+  background: repeating-linear-gradient(
+    to right,
+    var(--title) 0,
+    var(--title) 8px,
+    transparent 8px,
+    transparent 10px
+  );
+}
+
+.status-bar {
+  padding: 2px 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+}
+
+/* ---------- Media player ---------- */
 
 .player {
   position: relative;
   width: 100%;
   max-width: 360px;
   margin: 0 auto;
-  border-radius: 12px;
-  overflow: hidden;
+  padding: 2px;
   background: #000;
 }
 
@@ -104,61 +224,105 @@ button:disabled {
 
 .player canvas {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  inset: 2px;
+  width: calc(100% - 4px);
+  height: calc(100% - 4px);
   pointer-events: none;
 }
 
-#results {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-#results[hidden] {
-  display: none;
-}
+/* ---------- Results list view ---------- */
 
 #summary {
-  margin: 0;
-  font-size: 1.1rem;
-  font-weight: 600;
+  font-weight: bold;
 }
 
 .note {
-  margin: 0;
   color: var(--muted);
-  font-size: 0.85rem;
+  font-size: 12px;
 }
 
-#rep-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
+.list-view {
+  padding: 2px;
+  background: var(--field);
+  overflow-x: auto;
+}
+
+.list-view table {
+  width: 100%;
+  border-collapse: collapse;
+  white-space: nowrap;
+}
+
+.list-view th {
+  position: sticky;
+  top: 0;
+  padding: 2px 6px;
+  background: var(--face);
+  box-shadow: var(--raised);
+  font-weight: normal;
+  text-align: left;
+}
+
+.list-view td {
+  padding: 2px 6px;
+}
+
+.list-view .num {
+  text-align: right;
+  font-family: var(--mono);
+  font-size: 12px;
 }
 
 .rep {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  gap: 12px;
-  align-items: center;
-  padding: 10px 12px;
   cursor: pointer;
 }
 
-.rep:nth-child(odd) {
-  background: var(--stripe);
+.rep td:first-child {
+  font-family: var(--mono);
+  font-size: 12px;
 }
 
-.rep:hover {
-  background: #eef0f3;
+.rep .mark {
+  font-weight: bold;
 }
 
-.rep.shallow strong {
+.rep.ok .mark {
+  color: var(--good);
+}
+
+.rep.shallow .mark {
   color: var(--bad);
 }
 
-#export {
-  align-self: flex-end;
+.rep:focus {
+  outline: 1px dotted var(--text);
+  outline-offset: -1px;
+}
+
+.rep.selected,
+.rep.selected .mark {
+  background: var(--title);
+  color: var(--title-text);
+}
+
+/* ---------- Small screens ---------- */
+
+@media (max-width: 420px) {
+  body {
+    font-size: 14px;
+  }
+
+  main {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .list-view th,
+  .list-view td {
+    padding: 3px 4px;
+  }
+
+  .row button {
+    flex: 1 1 auto;
+  }
 }
