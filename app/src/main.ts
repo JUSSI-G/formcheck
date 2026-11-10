@@ -14,6 +14,7 @@ const results = document.querySelector<HTMLElement>("#results")!;
 const summary = document.querySelector<HTMLElement>("#summary")!;
 const repList = document.querySelector<HTMLOListElement>("#rep-list")!;
 const exportButton = document.querySelector<HTMLButtonElement>("#export")!;
+const sampleButton = document.querySelector<HTMLButtonElement>("#sample")!;
 
 let loopId = 0;
 let lastAnalysis: { data: PoseData; reps: Rep[]; labels: RepLabel[] } | null = null;
@@ -67,10 +68,7 @@ function showResults(reps: Rep[], model: DepthModel, fps: number) {
   results.hidden = false;
 }
 
-fileInput.addEventListener("change", () => {
-  const file = fileInput.files?.[0];
-  if (!file) return;
-
+function loadVideo(src: string) {
   video.cancelVideoFrameCallback(loopId);
   canvas.getContext("2d")!.clearRect(0, 0, canvas.width, canvas.height);
   progressText.textContent = "";
@@ -78,13 +76,28 @@ fileInput.addEventListener("change", () => {
   repList.replaceChildren();
   lastAnalysis = null;
 
-  video.src = URL.createObjectURL(file);
+  video.src = src;
+}
+
+fileInput.addEventListener("change", () => {
+  const file = fileInput.files?.[0];
+  if (!file) return;
+  loadVideo(URL.createObjectURL(file));
 });
 
-button.addEventListener("click", async () => {
+sampleButton.addEventListener("click", () => {
+  fileInput.value = "";
+  loadVideo("sample.mp4");
+  video.addEventListener("loadedmetadata", () => analyze(), { once: true });
+});
+
+button.addEventListener("click", () => analyze());
+
+async function analyze() {
   if (!video.src || isNaN(video.duration)) return;
   video.cancelVideoFrameCallback(loopId);
   button.disabled = true;
+  sampleButton.disabled = true;
   progressText.textContent = "Loading model…";
   const landmarker = await createLandmarker("full");
 
@@ -94,6 +107,7 @@ button.addEventListener("click", async () => {
 
   landmarker.close();
   button.disabled = false;
+  sampleButton.disabled = false;
   progressText.textContent = `Done: ${data.landmarks.length} frames`;
 
   const reps = repStats(data.landmarks, data.fps, data.width, data.height);
@@ -116,7 +130,7 @@ button.addEventListener("click", async () => {
 
   loopId = video.requestVideoFrameCallback(drawLoop);
   video.currentTime = 0;
-});
+}
 
 exportButton.addEventListener("click", async () => {
   if (!lastAnalysis) return;
